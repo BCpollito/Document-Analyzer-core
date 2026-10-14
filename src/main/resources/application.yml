@@ -1,9 +1,12 @@
 
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/analizador}
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/analizador}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD}
+    password: ${DB_PASSWORD:contr123}
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
 
   jpa:
     hibernate:
