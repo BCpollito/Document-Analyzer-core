@@ -115,3 +115,90 @@ No guardar el archivo `.env` ni credenciales reales en el repositorio. Mantener 
 La infraestructura de desarrollo incluye PostgreSQL con pgvector, un backend Spring Boot y un microservicio FastAPI con endpoint de salud.
 
 Las funcionalidades de análisis documental, extracción de texto, generación de embeddings y recuperación de información deben documentarse conforme se implementen y prueben.
+
+## Migraciones de base de datos con Flyway
+
+El esquema de PostgreSQL se administra mediante migraciones SQL versionadas con Flyway. Las migraciones se encuentran en `src/main/resources/db/migration/` y se ejecutan automáticamente cuando se inicia el backend.
+
+### Verificar las migraciones aplicadas
+
+Para consultar las migraciones registradas en la base de datos:
+
+```sql
+SELECT installed_rank, version, description, success
+FROM flyway_schema_history
+ORDER BY installed_rank;
+```
+
+Todas las migraciones aplicadas deben tener `success = true`.
+
+### Verificar las tablas del esquema
+
+```sql
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
+ORDER BY table_name;
+```
+
+El esquema debe contener las tablas de usuarios, documentos, fragmentos, consultas, conversaciones y mensajes, además de `flyway_schema_history`.
+
+### Verificar la extensión pgvector
+
+```sql
+SELECT extname
+FROM pg_extension
+WHERE extname = 'vector';
+```
+
+El resultado debe incluir la extensión `vector`.
+
+### Prueba de inicialización sobre una base de datos nueva
+
+Para comprobar que las migraciones pueden ejecutarse desde cero sin afectar la base de desarrollo, se utiliza una base de datos temporal independiente.
+
+1. Verificar que PostgreSQL esté en ejecución:
+
+   ```powershell
+   docker compose ps postgres
+   ```
+
+2. Crear la base de datos temporal:
+
+   ```powershell
+   docker exec document-analyzer-db psql -U postgres -d postgres -c "CREATE DATABASE analizador_ca05;"
+   ```
+
+3. Ejecutar el backend contra la base temporal para aplicar las migraciones:
+
+   ```powershell
+   docker compose run --build --rm --no-deps `
+     -e DB_URL=jdbc:postgresql://postgres:5432/analizador_ca05 `
+     backend
+   ```
+
+4. Consultar el historial de migraciones:
+
+   ```powershell
+   docker exec document-analyzer-db psql -U postgres -d analizador_ca05 -c "SELECT installed_rank, version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+   ```
+
+5. Comprobar las tablas creadas:
+
+   ```powershell
+   docker exec document-analyzer-db psql -U postgres -d analizador_ca05 -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;"
+   ```
+
+6. Verificar que pgvector esté habilitado:
+
+   ```powershell
+   docker exec document-analyzer-db psql -U postgres -d analizador_ca05 -c "SELECT extname FROM pg_extension WHERE extname = 'vector';"
+   ```
+
+### Resultado esperado
+
+La prueba se considera satisfactoria cuando Flyway aplica todas las migraciones pendientes sin errores, las versiones quedan registradas con `success = true`, se crean las tablas esperadas y la extensión `vector` está habilitada.
+
+La inicialización del esquema no debe depender de la ejecución manual de scripts SQL fuera del mecanismo de migraciones.
+
+La base de datos temporal se utiliza únicamente para validación. La base de desarrollo y su volumen persistente deben conservarse durante estas pruebas.
