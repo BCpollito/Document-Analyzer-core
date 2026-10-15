@@ -19,3 +19,7 @@ server:
 ai:
   service:
     base-url: ${AI_SERVICE_BASE_URL:http://localhost:8000}
+
+ai-service:
+  url: ${AI_SERVICE_URL:${AI_SERVICE_BASE_URL:http://ai-service:8000}}
+
