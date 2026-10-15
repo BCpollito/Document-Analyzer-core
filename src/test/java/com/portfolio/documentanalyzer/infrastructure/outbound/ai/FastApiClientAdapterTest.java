@@ -1,5 +1,6 @@
 package com.portfolio.documentanalyzer.infrastructure.outbound.ai;
 
+import com.portfolio.documentanalyzer.domain.exception.AiServiceIntegrationException;
 import com.portfolio.documentanalyzer.infrastructure.outbound.ai.dto.AiDocumentIndexRequestDto;
 import com.portfolio.documentanalyzer.infrastructure.outbound.ai.dto.AiDocumentIndexResponseDto;
 import com.portfolio.documentanalyzer.infrastructure.outbound.ai.dto.AiRagQueryRequestDto;
@@ -11,16 +12,22 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.jsonPath;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withBadRequest;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
@@ -44,7 +51,7 @@ class FastApiClientAdapterTest {
     void checkHealthShouldReturnTrueWhen200Ok() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL);
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
 
         server.expect(requestTo(BASE_URL + "/api/v1/health"))
                 .andExpect(method(HttpMethod.GET))
@@ -61,7 +68,7 @@ class FastApiClientAdapterTest {
     void checkHealthShouldReturnFalseWhenServerError() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL);
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
 
         server.expect(requestTo(BASE_URL + "/api/v1/health"))
                 .andExpect(method(HttpMethod.GET))
@@ -78,7 +85,7 @@ class FastApiClientAdapterTest {
     void checkHealthShouldReturnFalseWhenNot200() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL);
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
 
         server.expect(requestTo(BASE_URL + "/api/v1/health"))
                 .andExpect(method(HttpMethod.GET))
@@ -94,7 +101,7 @@ class FastApiClientAdapterTest {
     @DisplayName("checkHealth() retorna false cuando ocurre una excepción o error de conexión")
     void checkHealthShouldReturnFalseOnException() {
         RestClient.Builder builder = RestClient.builder();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, "http://invalid-host-unreachable:9999");
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, "http://invalid-host-unreachable:9999", null);
 
         boolean isHealthy = adapter.checkHealth();
 
@@ -106,7 +113,7 @@ class FastApiClientAdapterTest {
     void indexDocumentShouldPostAndReturnResponse() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL);
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
 
         String responseJson = """
                 {
@@ -146,7 +153,7 @@ class FastApiClientAdapterTest {
     void queryRagShouldPostAndReturnResponse() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
-        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL);
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
 
         String responseJson = """
                 {
@@ -179,6 +186,126 @@ class FastApiClientAdapterTest {
         assertThat(response.data()).isNotNull();
         assertThat(response.data().answer()).isEqualTo("Respuesta generada");
         assertThat(response.data().sources()).containsExactly("source1", "source2");
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("indexDocument() lanza AiServiceIntegrationException con AI_PROCESSING_ERROR en error HTTP 500")
+    void indexDocumentShouldThrowAiServiceIntegrationExceptionOnHttp500() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
+
+        server.expect(requestTo(BASE_URL + "/api/v1/documents/index"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withServerError());
+
+        AiDocumentIndexRequestDto request = new AiDocumentIndexRequestDto("doc-123", "Texto");
+
+        assertThatThrownBy(() -> adapter.indexDocument(request))
+                .isInstanceOf(AiServiceIntegrationException.class)
+                .satisfies(ex -> {
+                    AiServiceIntegrationException aiEx = (AiServiceIntegrationException) ex;
+                    assertThat(aiEx.getErrorCode()).isEqualTo(AiServiceIntegrationException.ERROR_AI_PROCESSING);
+                    assertThat(aiEx.getMessage()).isEqualTo("Error al procesar la solicitud en el servicio de IA.");
+                });
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("queryRag() lanza AiServiceIntegrationException con AI_PROCESSING_ERROR en error HTTP 400")
+    void queryRagShouldThrowAiServiceIntegrationExceptionOnHttp400() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
+
+        server.expect(requestTo(BASE_URL + "/api/v1/rag/query"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withBadRequest());
+
+        AiRagQueryRequestDto request = new AiRagQueryRequestDto("pregunta", "conv-1");
+
+        assertThatThrownBy(() -> adapter.queryRag(request))
+                .isInstanceOf(AiServiceIntegrationException.class)
+                .satisfies(ex -> {
+                    AiServiceIntegrationException aiEx = (AiServiceIntegrationException) ex;
+                    assertThat(aiEx.getErrorCode()).isEqualTo(AiServiceIntegrationException.ERROR_AI_PROCESSING);
+                    assertThat(aiEx.getMessage()).isEqualTo("Error al procesar la solicitud en el servicio de IA.");
+                });
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("indexDocument() lanza AiServiceIntegrationException con AI_TIMEOUT en error HTTP 504")
+    void indexDocumentShouldThrowAiTimeoutOnHttp504() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
+
+        server.expect(requestTo(BASE_URL + "/api/v1/documents/index"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withStatus(HttpStatus.GATEWAY_TIMEOUT));
+
+        AiDocumentIndexRequestDto request = new AiDocumentIndexRequestDto("doc-123", "Texto");
+
+        assertThatThrownBy(() -> adapter.indexDocument(request))
+                .isInstanceOf(AiServiceIntegrationException.class)
+                .satisfies(ex -> {
+                    AiServiceIntegrationException aiEx = (AiServiceIntegrationException) ex;
+                    assertThat(aiEx.getErrorCode()).isEqualTo(AiServiceIntegrationException.ERROR_AI_TIMEOUT);
+                    assertThat(aiEx.getMessage()).isEqualTo("El servicio de IA ha superado el tiempo límite de espera.");
+                });
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("indexDocument() lanza AiServiceIntegrationException con AI_TIMEOUT en SocketTimeoutException")
+    void indexDocumentShouldThrowAiTimeoutOnSocketTimeout() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
+
+        server.expect(requestTo(BASE_URL + "/api/v1/documents/index"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new SocketTimeoutException("Read timed out")));
+
+        AiDocumentIndexRequestDto request = new AiDocumentIndexRequestDto("doc-123", "Texto");
+
+        assertThatThrownBy(() -> adapter.indexDocument(request))
+                .isInstanceOf(AiServiceIntegrationException.class)
+                .satisfies(ex -> {
+                    AiServiceIntegrationException aiEx = (AiServiceIntegrationException) ex;
+                    assertThat(aiEx.getErrorCode()).isEqualTo(AiServiceIntegrationException.ERROR_AI_TIMEOUT);
+                    assertThat(aiEx.getMessage()).isEqualTo("El servicio de IA ha superado el tiempo límite de espera.");
+                });
+
+        server.verify();
+    }
+
+    @Test
+    @DisplayName("queryRag() lanza AiServiceIntegrationException con AI_PROCESSING_ERROR en error de conexión")
+    void queryRagShouldThrowAiProcessingErrorOnConnectionRefused() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        FastApiClientAdapter adapter = new FastApiClientAdapter(builder, BASE_URL, null);
+
+        server.expect(requestTo(BASE_URL + "/api/v1/rag/query"))
+                .andExpect(method(HttpMethod.POST))
+                .andRespond(withException(new IOException("Connection refused")));
+
+        AiRagQueryRequestDto request = new AiRagQueryRequestDto("pregunta", "conv-1");
+
+        assertThatThrownBy(() -> adapter.queryRag(request))
+                .isInstanceOf(AiServiceIntegrationException.class)
+                .satisfies(ex -> {
+                    AiServiceIntegrationException aiEx = (AiServiceIntegrationException) ex;
+                    assertThat(aiEx.getErrorCode()).isEqualTo(AiServiceIntegrationException.ERROR_AI_PROCESSING);
+                    assertThat(aiEx.getMessage()).isEqualTo("No se pudo establecer conexión con el servicio de IA.");
+                });
+
         server.verify();
     }
 }
