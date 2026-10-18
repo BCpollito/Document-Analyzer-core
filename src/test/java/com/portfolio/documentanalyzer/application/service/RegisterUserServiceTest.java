@@ -6,6 +6,7 @@ import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
 import com.portfolio.documentanalyzer.domain.exception.InvalidUserRegistrationException;
 import com.portfolio.documentanalyzer.domain.exception.UserAlreadyExistsException;
 import com.portfolio.documentanalyzer.domain.model.User;
+import com.portfolio.documentanalyzer.domain.model.UserId;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +54,7 @@ class RegisterUserServiceTest {
         when(userRepository.save(any(User.class))).thenAnswer(invocation -> {
             User userArg = invocation.getArgument(0);
             return User.reconstitute(
-                    expectedId,
+                    new UserId(expectedId),
                     userArg.getUsername(),
                     userArg.getEmail(),
                     userArg.getPasswordHash(),
@@ -75,11 +76,11 @@ class RegisterUserServiceTest {
         verify(userRepository).save(userCaptor.capture());
 
         User capturedUser = userCaptor.getValue();
-        assertThat(capturedUser.getUsername()).isEqualTo("johndoe");
-        assertThat(capturedUser.getEmail()).isEqualTo("john.doe@example.com");
-        assertThat(capturedUser.getPasswordHash()).isEqualTo(passwordHash);
-        assertThat(capturedUser.getPasswordHash()).doesNotContain(rawPassword);
-        assertThat(capturedUser.getId()).isNotNull();
+        assertThat(capturedUser.getUsername().value()).isEqualTo("johndoe");
+        assertThat(capturedUser.getEmail().value()).isEqualTo("john.doe@example.com");
+        assertThat(capturedUser.getPasswordHash().value()).isEqualTo(passwordHash);
+        assertThat(capturedUser.getPasswordHash().value()).doesNotContain(rawPassword);
+        assertThat(capturedUser.getId().value()).isNotNull();
     }
 
     @Test

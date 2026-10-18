@@ -1,7 +1,11 @@
 package com.portfolio.documentanalyzer.infrastructure.outbound.persistence;
 
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
+import com.portfolio.documentanalyzer.domain.model.Email;
+import com.portfolio.documentanalyzer.domain.model.PasswordHash;
 import com.portfolio.documentanalyzer.domain.model.User;
+import com.portfolio.documentanalyzer.domain.model.UserId;
+import com.portfolio.documentanalyzer.domain.model.Username;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.entity.UserEntity;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.repository.SpringDataUserRepository;
 import org.springframework.stereotype.Component;
@@ -48,20 +52,20 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     private UserEntity toEntity(User user) {
         return new UserEntity(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getPasswordHash(),
+                user.getId().value(),
+                user.getUsername().value(),
+                user.getEmail().value(),
+                user.getPasswordHash().value(),
                 user.getCreatedAt()
         );
     }
 
     private User toDomain(UserEntity entity) {
         return User.reconstitute(
-                entity.getId(),
-                entity.getUsername(),
-                entity.getEmail(),
-                entity.getPasswordHash(),
+                new UserId(entity.getId()),
+                new Username(entity.getUsername()),
+                new Email(entity.getEmail()),
+                new PasswordHash(entity.getPasswordHash()),
                 entity.getCreatedAt()
         );
     }
