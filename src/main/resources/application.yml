@@ -26,4 +26,4 @@ ai-service:
 security:
   jwt:
     secret: ${JWT_SECRET}
-    expiration: PT30M
+    expiration: PT60M
