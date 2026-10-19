@@ -4,4 +4,5 @@ package com.portfolio.documentanalyzer.application.port.out;
 public interface PasswordEncoderPort {
 
     String encode(String rawPassword);
+
 }
