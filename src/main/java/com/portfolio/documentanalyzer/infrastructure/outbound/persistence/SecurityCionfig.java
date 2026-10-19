@@ -15,19 +15,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableConfigurationProperties(JwtProperties.class)
-public class SecurityCionfig { @Bean
-SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter) throws Exception {
-    return http
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(a -> a
-                    .requestMatchers("/api/auth/login").permitAll()
-                    .anyRequest().authenticated())
-            .exceptionHandling(e -> e.authenticationEntryPoint(
-                    (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED)))
-            .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
-            .build();
-}
+public class SecurityCionfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http, JwtAuthFilter jwtFilter) throws Exception {
+        return http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(a -> a
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/v1/users/register",
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html"
+                        ).permitAll()
+                        .anyRequest().authenticated())
+                .exceptionHandling(e -> e.authenticationEntryPoint(
+                        (req, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Acceso no autorizado")))
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
+    }
 
     @Bean
     PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
