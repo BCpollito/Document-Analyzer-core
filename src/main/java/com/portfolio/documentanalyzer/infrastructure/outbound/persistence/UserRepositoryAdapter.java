@@ -50,6 +50,14 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
         return springDataUserRepository.existsByUsername(username);
     }
 
+    @Override
+    public java.util.Optional<User> findByEmail(String email) {
+        if (email == null) {
+            return java.util.Optional.empty();
+        }
+        return springDataUserRepository.findByEmail(email).map(this::toDomain);
+    }
+
     private UserEntity toEntity(User user) {
         return new UserEntity(
                 user.getId().value(),
