@@ -23,3 +23,7 @@ ai:
 ai-service:
   url: ${AI_SERVICE_URL:${AI_SERVICE_BASE_URL:http://ai-service:8000}}
 
+security:
+  jwt:
+    secret: ${JWT_SECRET}
+    expiration: PT60M

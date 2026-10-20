@@ -1,6 +1,8 @@
 package com.portfolio.documentanalyzer.infrastructure.outbound.security;
 
 import com.portfolio.documentanalyzer.application.port.out.PasswordEncoderPort;
+import com.portfolio.documentanalyzer.application.port.out.PasswordHasherPort;
+import com.portfolio.documentanalyzer.domain.model.PasswordHash;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +13,7 @@ import java.util.Objects;
  * Cumple con la restricción de que la base de datos nunca almacene contraseñas en texto plano.
  */
 @Component
-public class BCryptPasswordEncoderAdapter implements PasswordEncoderPort {
+public class BCryptPasswordEncoderAdapter implements PasswordEncoderPort, PasswordHasherPort {
 
     private final BCryptPasswordEncoder passwordEncoder;
 
@@ -27,5 +29,10 @@ public class BCryptPasswordEncoderAdapter implements PasswordEncoderPort {
     public String encode(String rawPassword) {
         Objects.requireNonNull(rawPassword, "rawPassword no puede ser nulo");
         return passwordEncoder.encode(rawPassword);
+    }
+
+    @Override
+    public boolean matches(String raw, String hash){
+        return passwordEncoder.matches(raw, hash);
     }
 }
