@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/v1/user/me")
+@RequestMapping("/api/v1/users/me")
 @Tag(name = "User Profile", description = "Endpoints para la gestión de la cuenta personal")
 public class UserProfileController {
     private final GetUserProfileUseCase getUserProfileUseCase;
