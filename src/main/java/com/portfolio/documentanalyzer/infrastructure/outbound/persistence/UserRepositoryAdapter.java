@@ -37,7 +37,7 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
 
     @Override
     public Optional<User> findById(UserId userId) {
-        return Optional.empty();
+        return springDataUserRepository.findById(userId.value()).map(this::toDomain);
     }
 
     @Override
