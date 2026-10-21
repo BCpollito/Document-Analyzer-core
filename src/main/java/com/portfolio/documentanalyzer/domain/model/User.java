@@ -121,4 +121,13 @@ public final class User {
     public String toString() {
         return "User{id=" + id.value() + ", username='" + username.value() + "', email='" + email.value() + "'}";
     }
+
+    /*solo se permiten modificar los campos autorizados
+    * el id es obviamente inmutable (final) y la contraseña tendra su propia flujo mas adelante
+    * cuando se implemente con verificacíon de correo seguramente
+    * */
+    public void updateProfile(Username username, Email email) {
+        this.username = Objects.requireNonNull(username, "El username es obligatorio");
+        this.email = Objects.requireNonNull(email, "El email es obligatorio");
+    }
 }
