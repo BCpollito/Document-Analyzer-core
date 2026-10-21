@@ -68,7 +68,7 @@ class LoginServiceTest {
         Instant expiresAt = Instant.now().plusSeconds(3600);
         AuthToken expectedToken = new AuthToken("sample.jwt.token", expiresAt);
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(new Email(email))).thenReturn(Optional.of(user));
         when(hasher.matches(rawPassword, storedHash)).thenReturn(true);
         when(tokenIssuePort.issue(user)).thenReturn(expectedToken);
 
@@ -80,7 +80,7 @@ class LoginServiceTest {
         assertThat(resultToken.accesTokenm()).isEqualTo("sample.jwt.token");
         assertThat(resultToken.expiresAt()).isEqualTo(expiresAt);
 
-        verify(userRepository).findByEmail(email);
+        verify(userRepository).findByEmail(new Email(email));
         verify(hasher).matches(rawPassword, storedHash);
         verify(tokenIssuePort).issue(user);
     }
@@ -92,14 +92,14 @@ class LoginServiceTest {
         String email = "unknown@example.com";
         LoginCommand command = new LoginCommand(email, "AnyPassword123!");
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(new Email(email))).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> loginService.login(command))
                 .isInstanceOf(InvalidCredentialException.class)
                 .hasMessageContaining("Credenciales");
 
-        verify(userRepository).findByEmail(email);
+        verify(userRepository).findByEmail(new Email(email));
         verify(hasher, never()).matches(any(), any());
         verify(tokenIssuePort, never()).issue(any());
     }
@@ -115,7 +115,7 @@ class LoginServiceTest {
 
         LoginCommand command = new LoginCommand(email, wrongPassword);
 
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(new Email(email))).thenReturn(Optional.of(user));
         when(hasher.matches(wrongPassword, storedHash)).thenReturn(false);
 
         // Act & Assert
@@ -123,7 +123,7 @@ class LoginServiceTest {
                 .isInstanceOf(InvalidCredentialException.class)
                 .hasMessageContaining("Credenciales");
 
-        verify(userRepository).findByEmail(email);
+        verify(userRepository).findByEmail(new Email(email));
         verify(hasher).matches(wrongPassword, storedHash);
         verify(tokenIssuePort, never()).issue(any());
     }
@@ -138,7 +138,7 @@ class LoginServiceTest {
         User user = createSampleUser(email, realHash);
 
         LoginCommand command = new LoginCommand(email, rawPassword);
-        when(userRepository.findByEmail(email)).thenReturn(Optional.of(user));
+        when(userRepository.findByEmail(new Email(email))).thenReturn(Optional.of(user));
         when(hasher.matches(rawPassword, realHash)).thenReturn(true);
         when(tokenIssuePort.issue(user)).thenReturn(new AuthToken("jwt", Instant.now().plusSeconds(3600)));
 

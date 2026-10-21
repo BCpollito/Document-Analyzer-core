@@ -1,6 +1,9 @@
 package com.portfolio.documentanalyzer.application.port.out;
 
 import com.portfolio.documentanalyzer.domain.model.User;
+import com.portfolio.documentanalyzer.domain.model.Email;
+import com.portfolio.documentanalyzer.domain.model.UserId;
+import com.portfolio.documentanalyzer.domain.model.Username;
 
 import java.util.Optional;
 
@@ -9,9 +12,12 @@ public interface UserRepositoryPort {
 
     User save(User user);
 
-    boolean existsByEmail(String email);
+    Optional<User> findById(UserId userId);
 
-    boolean existsByUsername(String username);
-    Optional<User> findByEmail(String email);
+    boolean existsByEmail(Email email);
+
+    boolean existsByUsername(Username username);
+
+    Optional<User> findByEmail(Email email);
 
 }
