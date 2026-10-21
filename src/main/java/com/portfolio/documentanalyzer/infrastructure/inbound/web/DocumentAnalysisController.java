@@ -1,5 +1,6 @@
 package com.portfolio.documentanalyzer.infrastructure.inbound.web;
 
+import com.portfolio.documentanalyzer.infrastructure.config.OpenApiConfig;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.DocumentIndexRequest;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.DocumentIndexResponse;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.ErrorResponseDto;
@@ -16,6 +17,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/v1")
 @Tag(name = "Document Analysis", description = "Endpoints para la indexación y consulta mediante IA")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class DocumentAnalysisController {
 
     private final FastApiClientAdapter fastApiClientAdapter;

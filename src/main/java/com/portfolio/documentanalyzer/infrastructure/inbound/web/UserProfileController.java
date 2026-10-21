@@ -4,9 +4,11 @@ import com.portfolio.documentanalyzer.application.port.in.GetUserProfileUseCase;
 import com.portfolio.documentanalyzer.application.port.in.UpdateUserProfileUseCase;
 import com.portfolio.documentanalyzer.application.port.in.command.UpdateUserProfileCommand;
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.UpdateUserProfileRequestDto;
+import com.portfolio.documentanalyzer.infrastructure.config.OpenApiConfig;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.UserProfileResponseDto;
+import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.UpdateUserProfileRequestDto;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +18,7 @@ import java.security.Principal;
 @RestController
 @RequestMapping("/api/v1/users/me")
 @Tag(name = "User Profile", description = "Endpoints para la gestión de la cuenta personal")
+@SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class UserProfileController {
     private final GetUserProfileUseCase getUserProfileUseCase;
     private final UpdateUserProfileUseCase updateUserProfileUseCase;

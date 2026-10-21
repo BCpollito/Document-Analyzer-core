@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -37,9 +38,10 @@ public class UserRegistrationController {
     }
 
     @PostMapping("/register")
+    @SecurityRequirements
     @Operation(
             summary = "Registrar un nuevo usuario",
-            description = "Valida las credenciales de entrada, codifica la contraseña mediante BCrypt, persiste al usuario y retorna su identificador único."
+            description = "Valida las credenciales de entrada, codifica la contraseña mediante BCrypt, persiste al usuario y retorna su identificador único. Endpoint público."
     )
     @ApiResponses(value = {
             @ApiResponse(
