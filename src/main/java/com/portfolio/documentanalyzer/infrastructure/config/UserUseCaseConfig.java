@@ -4,6 +4,7 @@ import com.portfolio.documentanalyzer.application.port.in.RegisterUserUseCase;
 import com.portfolio.documentanalyzer.application.port.out.PasswordEncoderPort;
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
 import com.portfolio.documentanalyzer.application.service.RegisterUserService;
+import com.portfolio.documentanalyzer.application.service.UserProfileService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -21,4 +22,10 @@ public class UserUseCaseConfig {
     ) {
         return new RegisterUserService(userRepositoryPort, passwordEncoderPort);
     }
+
+    @Bean
+    public UserProfileService userProfileService(UserRepositoryPort userRepositoryPort) {
+        return new UserProfileService(userRepositoryPort);
+    }
+
 }

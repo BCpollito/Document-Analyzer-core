@@ -37,12 +37,12 @@ public class RegisterUserService implements RegisterUserUseCase {
         Username username = new Username(command.username());
 
         // email único
-        if (userRepository.existsByEmail(email.value())) {
+        if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException("El email ya está registrado");
         }
 
         // username único
-        if (userRepository.existsByUsername(username.value())) {
+        if (userRepository.existsByUsername(username)) {
             throw new UserAlreadyExistsException("El username ya está en uso");
         }
 

@@ -7,6 +7,8 @@ import com.portfolio.documentanalyzer.domain.exception.InvalidUserRegistrationEx
 import com.portfolio.documentanalyzer.domain.exception.UserAlreadyExistsException;
 import com.portfolio.documentanalyzer.domain.model.User;
 import com.portfolio.documentanalyzer.domain.model.UserId;
+import com.portfolio.documentanalyzer.domain.model.Email;
+import com.portfolio.documentanalyzer.domain.model.Username;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -46,8 +48,8 @@ class RegisterUserServiceTest {
         String passwordHash = "$2a$10$hashedPasswordExampleForTestOnly";
         RegisterUserCommand command = new RegisterUserCommand("johndoe", "john.doe@example.com", rawPassword);
 
-        when(userRepository.existsByEmail("john.doe@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("johndoe")).thenReturn(false);
+        when(userRepository.existsByEmail(new Email("john.doe@example.com"))).thenReturn(false);
+        when(userRepository.existsByUsername(new Username("johndoe"))).thenReturn(false);
         when(passwordEncoder.encode(rawPassword)).thenReturn(passwordHash);
 
         UUID expectedId = UUID.randomUUID();
@@ -88,7 +90,7 @@ class RegisterUserServiceTest {
     void registerShouldThrowWhenEmailAlreadyExists() {
         // Arrange
         RegisterUserCommand command = new RegisterUserCommand("johndoe", "existing@example.com", "SecurePassword123!");
-        when(userRepository.existsByEmail("existing@example.com")).thenReturn(true);
+        when(userRepository.existsByEmail(new Email("existing@example.com"))).thenReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> registerUserService.register(command))
@@ -111,8 +113,8 @@ class RegisterUserServiceTest {
     void registerShouldThrowWhenPasswordDoesNotMeetPolicy(String invalidPassword) {
         // Arrange
         RegisterUserCommand command = new RegisterUserCommand("johndoe", "valid.email@example.com", invalidPassword);
-        when(userRepository.existsByEmail("valid.email@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("johndoe")).thenReturn(false);
+        when(userRepository.existsByEmail(new Email("valid.email@example.com"))).thenReturn(false);
+        when(userRepository.existsByUsername(new Username("johndoe"))).thenReturn(false);
 
         // Act & Assert
         assertThatThrownBy(() -> registerUserService.register(command))
@@ -128,8 +130,8 @@ class RegisterUserServiceTest {
     void registerShouldThrowWhenUsernameAlreadyExists() {
         // Arrange
         RegisterUserCommand command = new RegisterUserCommand("existing_user", "new.email@example.com", "SecurePassword123!");
-        when(userRepository.existsByEmail("new.email@example.com")).thenReturn(false);
-        when(userRepository.existsByUsername("existing_user")).thenReturn(true);
+        when(userRepository.existsByEmail(new Email("new.email@example.com"))).thenReturn(false);
+        when(userRepository.existsByUsername(new Username("existing_user"))).thenReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> registerUserService.register(command))

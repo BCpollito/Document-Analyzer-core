@@ -7,6 +7,7 @@ import com.portfolio.documentanalyzer.application.port.out.PasswordHasherPort;
 import com.portfolio.documentanalyzer.application.port.out.TokenIssuePort;
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
 import com.portfolio.documentanalyzer.domain.exception.InvalidCredentialException;
+import com.portfolio.documentanalyzer.domain.model.Email;
 import com.portfolio.documentanalyzer.domain.model.User;
 
 public class LoginService implements LoginUseCase {
@@ -24,7 +25,7 @@ public class LoginService implements LoginUseCase {
 
     @Override
     public AuthToken login (LoginCommand command){
-        User user = userRepositoryPort.findByEmail(command.email())
+        User user = userRepositoryPort.findByEmail(new Email(command.email()))
                 .filter(u -> hasher.matches(command.password(), u.getPasswordHash().value()))
                 .orElseThrow(() -> new InvalidCredentialException("Credenciales invalidas"));
         return tokenIssuePort.issue(user);

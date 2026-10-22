@@ -11,6 +11,7 @@ import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.reposi
 import org.springframework.stereotype.Component;
 
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * Adaptador de persistencia que implementa UserRepositoryPort delegando en Spring Data JPA.
@@ -35,27 +36,32 @@ public class UserRepositoryAdapter implements UserRepositoryPort {
     }
 
     @Override
-    public boolean existsByEmail(String email) {
-        if (email == null) {
-            return false;
-        }
-        return springDataUserRepository.existsByEmail(email);
+    public Optional<User> findById(UserId userId) {
+        return springDataUserRepository.findById(userId.value()).map(this::toDomain);
     }
 
     @Override
-    public boolean existsByUsername(String username) {
+    public boolean existsByEmail(Email email) {
+        if (email == null) {
+            return false;
+        }
+        return springDataUserRepository.existsByEmail(email.value());
+    }
+
+    @Override
+    public boolean existsByUsername(Username username) {
         if (username == null) {
             return false;
         }
-        return springDataUserRepository.existsByUsername(username);
+        return springDataUserRepository.existsByUsername(username.value());
     }
 
     @Override
-    public java.util.Optional<User> findByEmail(String email) {
+    public java.util.Optional<User> findByEmail(Email email) {
         if (email == null) {
             return java.util.Optional.empty();
         }
-        return springDataUserRepository.findByEmail(email).map(this::toDomain);
+        return springDataUserRepository.findByEmail(email.value()).map(this::toDomain);
     }
 
     private UserEntity toEntity(User user) {
