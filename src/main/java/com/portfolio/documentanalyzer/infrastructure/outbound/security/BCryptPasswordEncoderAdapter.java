@@ -2,7 +2,6 @@ package com.portfolio.documentanalyzer.infrastructure.outbound.security;
 
 import com.portfolio.documentanalyzer.application.port.out.PasswordEncoderPort;
 import com.portfolio.documentanalyzer.application.port.out.PasswordHasherPort;
-import com.portfolio.documentanalyzer.domain.model.PasswordHash;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 

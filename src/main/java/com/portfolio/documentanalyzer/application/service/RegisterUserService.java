@@ -6,10 +6,10 @@ import com.portfolio.documentanalyzer.application.port.out.PasswordEncoderPort;
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
 import com.portfolio.documentanalyzer.domain.exception.InvalidUserRegistrationException;
 import com.portfolio.documentanalyzer.domain.exception.UserAlreadyExistsException;
-import com.portfolio.documentanalyzer.domain.model.Email;
-import com.portfolio.documentanalyzer.domain.model.PasswordHash;
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.PasswordHash;
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.domain.model.Username;
+import com.portfolio.documentanalyzer.domain.vo.Username;
 
 import java.util.Objects;
 import java.util.UUID;
