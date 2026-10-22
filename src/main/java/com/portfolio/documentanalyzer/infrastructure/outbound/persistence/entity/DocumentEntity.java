@@ -40,8 +40,9 @@ public class DocumentEntity {
 
     }
 
-    public DocumentEntity(UUID id, String fileName, String filePath, DocumentStatus status, Instant uploadDate, Instant updateAt, String errorMessage) {
+    public DocumentEntity(UUID id, UUID userId, String fileName, String filePath, DocumentStatus status, Instant uploadDate, Instant updateAt, String errorMessage) {
         this.id = id;
+        this.userId = userId;
         this.fileName = fileName;
         this.filePath = filePath;
         this.status = status;
