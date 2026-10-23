@@ -30,7 +30,7 @@ public class DocumentEntity {
     @Column(name = "upload_date", nullable = false)
     private Instant uploadDate;
 
-    @Column(name = "update_at", nullable = false)
+    @Column(name = "updated_at", nullable = false)
     private Instant updateAt;
 
     @Column(name = "error_message", nullable = true)
