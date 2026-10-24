@@ -5,6 +5,7 @@ import com.portfolio.documentanalyzer.domain.model.Document;
 import com.portfolio.documentanalyzer.domain.vo.DocumentId;
 import com.portfolio.documentanalyzer.domain.vo.UserId;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.entity.DocumentEntity;
+import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.entity.UserEntity;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.repository.SpringDataDocumentRepository;
 import org.springframework.stereotype.Component;
 
@@ -23,7 +24,19 @@ public class DocumentRepositoryAdapter implements DocumentRepositoryPort {
     }
 
     @Override
+    public Document save (Document document, UserId userId){
+        Objects.requireNonNull(document, "El documento no puede ser nulo");
+
+        DocumentEntity entity = toEntity(document);
+        DocumentEntity savedEntity = springDataDocumentRepository.save(entity);
+        return toDomain(savedEntity);
+    }
+
+    @Override
     public Optional<Document> findByIdAndUserId(DocumentId documentId, UserId userId){
+        if (documentId == null){
+            return java.util.Optional.empty();
+        }
         return springDataDocumentRepository.findByIdAndUserId(documentId.value(), userId.value())
                 .map(this::toDomain);
     }
