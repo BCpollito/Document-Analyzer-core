@@ -12,6 +12,7 @@ import java.util.UUID;
 public interface DocumentRepositoryPort {
 
     Document save (Document document, UserId userId);
+    Optional<Document> findById(DocumentId documentId);
     Optional<Document> findByIdAndUserId(DocumentId documentId, UserId userId);
 
     List<Document> findAllByUserId(UserId userId);

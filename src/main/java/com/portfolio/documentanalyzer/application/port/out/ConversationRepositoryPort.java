@@ -6,14 +6,11 @@ import com.portfolio.documentanalyzer.domain.vo.UserId;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface ConversationRepositoryPort {
+    Conversation save(Conversation conversation);
     Optional<Conversation> findByIdAndUserId(ConversationId conversationId, UserId userId);
-
-
     List<Conversation> findAllByUserId(UserId userId);
-
-
     boolean existsByIdAndUserId(ConversationId conversationId, UserId userId);
+    void deleteByIdAndUserId(ConversationId conversationId, UserId userId);
 }

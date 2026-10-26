@@ -52,6 +52,10 @@ public final class Document {
     public boolean isOwnedBy(UserId userId) {
         return this.userId.equals(userId);
     }
+    public void updateFilename(String newFilename) {
+        this.filename = validateNotBlank(newFilename, "El nombre del archivo no puede estar vacío");
+        this.updatedAt = Instant.now();
+    }
     public void markAsProcessing() {
         this.status = DocumentStatus.PROCESSING;
         this.updatedAt = Instant.now();

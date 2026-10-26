@@ -10,6 +10,9 @@ public record AiDocumentIndexRequestDto(
         @JsonProperty("document_id")
         String documentId,
 
+        @JsonProperty("user_id")
+        String userId,
+
         @JsonProperty("content")
         String content,
 
@@ -17,6 +20,14 @@ public record AiDocumentIndexRequestDto(
         Map<String, String> metadata
 ) {
     public AiDocumentIndexRequestDto(String documentId, String content) {
-        this(documentId, content, null);
+        this(documentId, null, content, null);
+    }
+
+    public AiDocumentIndexRequestDto(String documentId, String content, Map<String, String> metadata) {
+        this(documentId, null, content, metadata);
+    }
+
+    public AiDocumentIndexRequestDto(String documentId, String userId, String content) {
+        this(documentId, userId, content, null);
     }
 }

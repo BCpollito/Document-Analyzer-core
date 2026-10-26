@@ -33,6 +33,15 @@ public class DocumentRepositoryAdapter implements DocumentRepositoryPort {
     }
 
     @Override
+    public Optional<Document> findById(DocumentId documentId) {
+        if (documentId == null) {
+            return Optional.empty();
+        }
+        return springDataDocumentRepository.findById(documentId.value())
+                .map(this::toDomain);
+    }
+
+    @Override
     public Optional<Document> findByIdAndUserId(DocumentId documentId, UserId userId){
         if (documentId == null){
             return java.util.Optional.empty();

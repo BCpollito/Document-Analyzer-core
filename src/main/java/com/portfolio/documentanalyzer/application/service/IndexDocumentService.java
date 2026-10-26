@@ -30,6 +30,6 @@ public class IndexDocumentService implements IndexDocumentUseCase {
 
         Document document= Document.create(userId, indexDocumentCommand.filename(),indexDocumentCommand.filename());
 
-        return documentRepositoryPort.save(document, userId).getUserId().value();
+        return documentRepositoryPort.save(document, userId).getId().value();
     }
 }

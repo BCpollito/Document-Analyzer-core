@@ -45,6 +45,12 @@ class AiDocumentIndexRequest(BaseModel):
         description="Identificador único del documento a procesar e indexar",
         examples=["doc-123"],
     )
+
+    user_id: Optional[str] = Field(
+        default=None,
+        description="Identificador único del usuario",
+        examples=["user-123"],
+    )
     content: str = Field(
         ...,
         description="Texto completo extraído del documento para vectorización",
@@ -92,6 +98,13 @@ class AiRagQueryRequest(BaseModel):
         description="Pregunta del usuario en lenguaje natural",
         examples=["¿Cuáles son las conclusiones financieras del documento?"],
     )
+
+    user_id: Optional[str] = Field(
+        default=None,
+        description="Identificador único del usuario",
+        examples=["user-123"],
+    )
+
     conversation_id: Optional[str] = Field(
         default=None,
         description="Identificador único de la conversación para mantener el contexto",
@@ -221,10 +234,11 @@ def index_document(request: AiDocumentIndexRequest) -> AiDocumentIndexResponse:
     },
 )
 def query_rag(request: AiRagQueryRequest) -> AiRagQueryResponse:
+    sources = [f"user_{request.user_id}_doc_chunk_1", f"user_{request.user_id}_doc_chunk_2"] if request.user_id else ["chunk-1", "chunk-2"]
     return AiRagQueryResponse(
         status="success",
         data=AiRagQueryData(
             answer=f"Mock response for query: {request.query}",
-            sources=["chunk-1", "chunk-2"],
+            sources=sources,
         ),
     )

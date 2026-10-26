@@ -60,8 +60,7 @@ class DocumentAnalysisControllerTest {
 
         DocumentIndexRequest request = new DocumentIndexRequest(
                 "doc-123",
-                "Texto de prueba",
-                Map.of("filename", "informe.pdf")
+                "Texto de prueba"
         );
 
         mockMvc.perform(post("/api/v1/documents/index")

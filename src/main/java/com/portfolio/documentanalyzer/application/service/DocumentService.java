@@ -1,89 +1,65 @@
 package com.portfolio.documentanalyzer.application.service;
 
+import com.portfolio.documentanalyzer.application.policy.DocumentAuthorizationPolicy;
 import com.portfolio.documentanalyzer.application.port.in.DeleteDocumentUseCase;
 import com.portfolio.documentanalyzer.application.port.in.GetDocumentUseCase;
 import com.portfolio.documentanalyzer.application.port.in.GetDocumentsUseCase;
+import com.portfolio.documentanalyzer.application.port.in.UpdateDocumentUseCase;
 import com.portfolio.documentanalyzer.application.port.out.DocumentRepositoryPort;
-import com.portfolio.documentanalyzer.domain.exception.ResorceNotFoundException;
 import com.portfolio.documentanalyzer.domain.model.Document;
 import com.portfolio.documentanalyzer.domain.vo.DocumentId;
 import com.portfolio.documentanalyzer.domain.vo.UserId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
 
-public class DocumentService implements DeleteDocumentUseCase, GetDocumentsUseCase, GetDocumentUseCase {
+public class DocumentService implements DeleteDocumentUseCase, GetDocumentsUseCase, GetDocumentUseCase, UpdateDocumentUseCase {
+
+    private static final Logger log = LoggerFactory.getLogger(DocumentService.class);
 
     private final DocumentRepositoryPort documentRepositoryPort;
+    private final DocumentAuthorizationPolicy authorizationPolicy;
+
+    public DocumentService(DocumentRepositoryPort documentRepositoryPort, DocumentAuthorizationPolicy authorizationPolicy) {
+        this.documentRepositoryPort = documentRepositoryPort;
+        this.authorizationPolicy = authorizationPolicy;
+    }
 
     public DocumentService(DocumentRepositoryPort documentRepositoryPort) {
-        this.documentRepositoryPort = documentRepositoryPort;
+        this(documentRepositoryPort, new DocumentAuthorizationPolicy(documentRepositoryPort));
     }
 
     @Override
-    public Document getDocumentUseCase(String documentIdStr, String userIdStr){
-        UUID uuidUser;
-        UUID uuidDoc;
-        try {
-            uuidUser = UUID.fromString(userIdStr);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("El formato del ID de usuario debe ser un UUID válido.");
-        }
-
-        try {
-            uuidDoc = UUID.fromString(documentIdStr);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("El formato del ID del documento debe ser un UUID válido.");
-        }
-
-        UserId userId = UserId.of(uuidUser);
-        DocumentId documentId = DocumentId.of(uuidDoc);
-
-        if (!documentRepositoryPort.existsByIdAndUserId(documentId, userId)){
-            throw new ResorceNotFoundException("Recurso no encontrado");
-        }
-
-        return documentRepositoryPort.findByIdAndUserId(documentId, userId).orElseThrow(()-> new ResorceNotFoundException("Documento no encontrado"));
-
+    public Document getDocumentUseCase(String documentIdStr, String userIdStr) {
+        Document document = authorizationPolicy.verifyAndGetOwnership(documentIdStr, userIdStr);
+        log.info("AUDIT - Operación de lectura de documento exitosa. DocumentId: [{}], UserId: [{}]", documentIdStr, userIdStr);
+        return document;
     }
 
     @Override
-    public List<Document> getDocumentsUseCase(String userIdStr){
-        UUID uuid;
-
-        try {
-            uuid = UUID.fromString(userIdStr);
-        }catch (IllegalArgumentException | NullPointerException e){
-            throw new IllegalArgumentException("EL formato del ID del usuario debe ser un UUID valido.");
-        }
-        UserId userId= UserId.of(uuid);
-
-        return documentRepositoryPort.findAllByUserId(userId);
+    public List<Document> getDocumentsUseCase(String userIdStr) {
+        UserId userId = authorizationPolicy.parseUserId(userIdStr);
+        List<Document> documents = documentRepositoryPort.findAllByUserId(userId);
+        log.info("AUDIT - Consulta de listado de documentos exitosa. Total: {}, UserId: [{}]", documents.size(), userIdStr);
+        return documents;
     }
 
     @Override
-    public void deleteDocumentUseCase(String documentIdStr, String userIdStr){
-        UUID uuidUser;
-        UUID uuidDoc;
-        try {
-            uuidUser = UUID.fromString(userIdStr);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("El formato del ID de usuario debe ser un UUID válido.");
-        }
+    public Document updateDocumentUseCase(String documentIdStr, String userIdStr, String newFilename) {
+        Document document = authorizationPolicy.verifyAndGetOwnership(documentIdStr, userIdStr);
+        document.updateFilename(newFilename);
+        Document updatedDocument = documentRepositoryPort.save(document, document.getUserId());
+        log.info("AUDIT - Operación de modificación de documento exitosa. DocumentId: [{}], UserId: [{}]", documentIdStr, userIdStr);
+        return updatedDocument;
+    }
 
-        try {
-            uuidDoc = UUID.fromString(documentIdStr);
-        } catch (IllegalArgumentException | NullPointerException e) {
-            throw new IllegalArgumentException("El formato del ID del documento debe ser un UUID válido.");
-        }
-
-        UserId userId = UserId.of(uuidUser);
-        DocumentId documentId = DocumentId.of(uuidDoc);
-
-        if (!documentRepositoryPort.existsByIdAndUserId(documentId, userId)){
-            throw new ResorceNotFoundException("Recurso no encontrado");
-        }
+    @Override
+    public void deleteDocumentUseCase(String documentIdStr, String userIdStr) {
+        authorizationPolicy.verifyOwnership(documentIdStr, userIdStr);
+        UserId userId = authorizationPolicy.parseUserId(userIdStr);
+        DocumentId documentId = authorizationPolicy.parseDocumentId(documentIdStr);
         documentRepositoryPort.deleteByIdAndUserId(documentId, userId);
+        log.info("AUDIT - Operación de eliminación de documento exitosa. DocumentId: [{}], UserId: [{}]", documentIdStr, userIdStr);
     }
 }

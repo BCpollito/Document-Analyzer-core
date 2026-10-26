@@ -17,4 +17,6 @@ public interface SpringDataConversationRepository extends JpaRepository<Conversa
 
     boolean existsByIdAndUserId(UUID id, UUID userId);
 
+    void deleteByIdAndUserId(UUID id, UUID userId);
+
 }
