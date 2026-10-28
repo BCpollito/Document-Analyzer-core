@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 @RestController
-@RequestMapping("/api/v1/users/me")
+@RequestMapping({"/api/v1/users/me", "/api/v1/user/me"})
 @Tag(name = "User Profile", description = "Endpoints para la gestión de la cuenta personal")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class UserProfileController {
@@ -31,6 +31,9 @@ public class UserProfileController {
     @Operation(summary = "Obtener perfil", description = "Retorna los datos del usuario autenticado basándose en su token.")
     @GetMapping
     public ResponseEntity<UserProfileResponseDto> getUserProfile(Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Usuario no autenticado");
+        }
         String userId = principal.getName();
 
         User user = getUserProfileUseCase.getUserProfile(userId);
@@ -43,6 +46,9 @@ public class UserProfileController {
     public ResponseEntity<UserProfileResponseDto> updateUserProfile(
             @RequestBody UpdateUserProfileRequestDto request,
             Principal principal) {
+        if (principal == null) {
+            throw new IllegalArgumentException("Usuario no autenticado");
+        }
         String userId  = principal.getName();
 
         UpdateUserProfileCommand command = new UpdateUserProfileCommand(

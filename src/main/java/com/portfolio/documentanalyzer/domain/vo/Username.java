@@ -1,4 +1,4 @@
-package com.portfolio.documentanalyzer.domain.model;
+package com.portfolio.documentanalyzer.domain.vo;
 
 import com.portfolio.documentanalyzer.domain.exception.InvalidUserRegistrationException;
 

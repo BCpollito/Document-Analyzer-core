@@ -7,7 +7,7 @@ import com.portfolio.documentanalyzer.application.port.out.PasswordHasherPort;
 import com.portfolio.documentanalyzer.application.port.out.TokenIssuePort;
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
 import com.portfolio.documentanalyzer.domain.exception.InvalidCredentialException;
-import com.portfolio.documentanalyzer.domain.model.Email;
+import com.portfolio.documentanalyzer.domain.vo.Email;
 import com.portfolio.documentanalyzer.domain.model.User;
 
 public class LoginService implements LoginUseCase {

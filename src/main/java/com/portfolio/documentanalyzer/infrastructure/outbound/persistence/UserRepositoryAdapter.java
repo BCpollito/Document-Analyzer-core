@@ -1,11 +1,11 @@
 package com.portfolio.documentanalyzer.infrastructure.outbound.persistence;
 
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
-import com.portfolio.documentanalyzer.domain.model.Email;
-import com.portfolio.documentanalyzer.domain.model.PasswordHash;
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.PasswordHash;
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.domain.model.UserId;
-import com.portfolio.documentanalyzer.domain.model.Username;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
+import com.portfolio.documentanalyzer.domain.vo.Username;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.entity.UserEntity;
 import com.portfolio.documentanalyzer.infrastructure.outbound.persistence.repository.SpringDataUserRepository;
 import org.springframework.stereotype.Component;

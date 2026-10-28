@@ -1,5 +1,10 @@
 package com.portfolio.documentanalyzer.domain.model;
 
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.PasswordHash;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
+import com.portfolio.documentanalyzer.domain.vo.Username;
+
 import java.time.Instant;
 import java.util.Objects;
 import java.util.UUID;

@@ -1,5 +1,11 @@
 package com.portfolio.documentanalyzer.infrastructure.inbound.web;
 
+import com.portfolio.documentanalyzer.application.port.out.ConversationRepositoryPort;
+import com.portfolio.documentanalyzer.application.port.out.DocumentRepositoryPort;
+import com.portfolio.documentanalyzer.domain.exception.ResorceNotFoundException;
+import com.portfolio.documentanalyzer.domain.vo.ConversationId;
+import com.portfolio.documentanalyzer.domain.vo.DocumentId;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
 import com.portfolio.documentanalyzer.infrastructure.config.OpenApiConfig;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.DocumentIndexRequest;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.DocumentIndexResponse;
@@ -20,30 +26,50 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1")
-@Tag(name = "Document Analysis", description = "Endpoints para la indexación y consulta mediante IA")
+@Tag(name = "Document Analysis", description = "Endpoints para la indexación y consulta mediante IA con aislamiento por usuario")
 @SecurityRequirement(name = OpenApiConfig.BEARER_AUTH)
 public class DocumentAnalysisController {
 
+    private static final Logger log = LoggerFactory.getLogger(DocumentAnalysisController.class);
+
     private final FastApiClientAdapter fastApiClientAdapter;
+    private final DocumentRepositoryPort documentRepositoryPort;
+    private final ConversationRepositoryPort conversationRepositoryPort;
+
+    @Autowired
+    public DocumentAnalysisController(
+            FastApiClientAdapter fastApiClientAdapter,
+            DocumentRepositoryPort documentRepositoryPort,
+            ConversationRepositoryPort conversationRepositoryPort
+    ) {
+        this.fastApiClientAdapter = fastApiClientAdapter;
+        this.documentRepositoryPort = documentRepositoryPort;
+        this.conversationRepositoryPort = conversationRepositoryPort;
+    }
 
     public DocumentAnalysisController(FastApiClientAdapter fastApiClientAdapter) {
-        this.fastApiClientAdapter = fastApiClientAdapter;
+        this(fastApiClientAdapter, null, null);
     }
 
     @PostMapping("/documents/index")
     @Operation(
             summary = "Indexar documento para análisis",
-            description = "Envía el contenido y metadatos de un documento para ser procesado, fragmentado y almacenado en la base de datos vectorial."
+            description = "Envía el contenido y metadatos de un documento para ser procesado, fragmentado y almacenado en la base de datos vectorial garantizando aislamiento."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -71,14 +97,40 @@ public class DocumentAnalysisController {
                     )
             )
     })
-    public ResponseEntity<DocumentIndexResponse> indexDocument(@Valid @RequestBody DocumentIndexRequest request) {
+    public ResponseEntity<DocumentIndexResponse> indexDocument(
+            @Valid @RequestBody DocumentIndexRequest request,
+            Principal principal
+    ) {
+        String userId = principal != null ? principal.getName() : null;
+
+        if (userId != null && documentRepositoryPort != null) {
+            try {
+                UUID docUuid = UUID.fromString(request.documentId());
+                UUID userUuid = UUID.fromString(userId);
+                DocumentId docId = DocumentId.of(docUuid);
+                UserId uId = UserId.of(userUuid);
+
+                // Si el documento existe globalmente pero no pertenece a este usuario -> rechazar (anti-IDOR)
+                if (documentRepositoryPort.findById(docId).isPresent() &&
+                        !documentRepositoryPort.existsByIdAndUserId(docId, uId)) {
+                    log.warn("SECURITY - Intento no autorizado de indexar o sobreescribir documento ajeno [{}]. Solicitante: [{}]",
+                            request.documentId(), userId);
+                    throw new ResorceNotFoundException("Recurso no encontrado");
+                }
+            } catch (IllegalArgumentException e) {
+                log.debug("ID de documento o usuario no es UUID estándar, omitiendo validación relacional: {}", e.getMessage());
+            }
+        }
+
         AiDocumentIndexRequestDto aiRequest = new AiDocumentIndexRequestDto(
                 request.documentId(),
+                userId,
                 request.content(),
                 request.metadata()
         );
 
         AiDocumentIndexResponseDto aiResponse = fastApiClientAdapter.indexDocument(aiRequest);
+        log.info("AUDIT - Documento indexado exitosamente. DocumentId: [{}], UserId: [{}]", request.documentId(), userId);
 
         DocumentIndexResponse response = new DocumentIndexResponse(
                 aiResponse.status(),
@@ -96,7 +148,7 @@ public class DocumentAnalysisController {
     @PostMapping("/rag/query")
     @Operation(
             summary = "Realizar consulta RAG sobre los documentos indexados",
-            description = "Consulta la base de conocimientos vectorial mediante Retrieval-Augmented Generation (RAG) utilizando el historial conversacional."
+            description = "Consulta la base de conocimientos vectorial mediante Retrieval-Augmented Generation (RAG) filtrando por usuario y respetando la propiedad."
     )
     @ApiResponses(value = {
             @ApiResponse(
@@ -124,7 +176,30 @@ public class DocumentAnalysisController {
                     )
             )
     })
-    public ResponseEntity<RagQueryResponse> queryRag(@Valid @RequestBody RagQueryRequest request) {
+    public ResponseEntity<RagQueryResponse> queryRag(
+            @Valid @RequestBody RagQueryRequest request,
+            Principal principal
+    ) {
+        String userId = principal != null ? principal.getName() : null;
+
+        if (userId != null && conversationRepositoryPort != null &&
+                request.conversationId() != null && !request.conversationId().isBlank()) {
+            try {
+                UUID convUuid = UUID.fromString(request.conversationId());
+                UUID userUuid = UUID.fromString(userId);
+                boolean isOwned = conversationRepositoryPort.existsByIdAndUserId(
+                        ConversationId.of(convUuid), UserId.of(userUuid)
+                );
+                if (!isOwned) {
+                    log.warn("SECURITY - Consulta RAG rechazada: Conversación [{}] no encontrada o no pertenece al usuario [{}]",
+                            request.conversationId(), userId);
+                    throw new ResorceNotFoundException("Conversación no encontrada");
+                }
+            } catch (IllegalArgumentException e) {
+                log.debug("ID de conversación no es UUID estándar: {}", e.getMessage());
+            }
+        }
+
         List<MessageRoleDto> history = request.history() != null
                 ? request.history().stream()
                         .map(msg -> new MessageRoleDto(msg.role(), msg.content()))
@@ -133,11 +208,14 @@ public class DocumentAnalysisController {
 
         AiRagQueryRequestDto aiRequest = new AiRagQueryRequestDto(
                 request.query(),
+                userId,
                 request.conversationId(),
                 history
         );
 
         AiRagQueryResponseDto aiResponse = fastApiClientAdapter.queryRag(aiRequest);
+        log.info("AUDIT - Consulta RAG completada exitosamente. ConversationId: [{}], UserId: [{}]",
+                request.conversationId(), userId);
 
         RagQueryResponse response = new RagQueryResponse(
                 aiResponse.status(),

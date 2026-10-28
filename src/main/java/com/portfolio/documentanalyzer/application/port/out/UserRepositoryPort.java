@@ -1,9 +1,9 @@
 package com.portfolio.documentanalyzer.application.port.out;
 
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.domain.model.Email;
-import com.portfolio.documentanalyzer.domain.model.UserId;
-import com.portfolio.documentanalyzer.domain.model.Username;
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
+import com.portfolio.documentanalyzer.domain.vo.Username;
 
 import java.util.Optional;
 

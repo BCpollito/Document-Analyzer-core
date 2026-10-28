@@ -2,6 +2,7 @@ package com.portfolio.documentanalyzer.infrastructure.inbound.web;
 
 import com.portfolio.documentanalyzer.domain.exception.AiServiceIntegrationException;
 import com.portfolio.documentanalyzer.domain.exception.InvalidUserRegistrationException;
+import com.portfolio.documentanalyzer.domain.exception.ResorceNotFoundException;
 import com.portfolio.documentanalyzer.domain.exception.UserAlreadyExistsException;
 import com.portfolio.documentanalyzer.infrastructure.inbound.web.dto.ErrorResponseDto;
 import io.swagger.v3.oas.annotations.Hidden;
@@ -55,5 +56,12 @@ public class GlobalExceptionHandler {
         log.warn("Error de validación en la solicitud: {}", errorMessage);
         ErrorResponseDto response = ErrorResponseDto.of("VALIDATION_ERROR", errorMessage);
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    @ExceptionHandler(ResorceNotFoundException.class)
+    public ResponseEntity<ErrorResponseDto> handleResourceNotFoundException(ResorceNotFoundException ex){
+        log.warn("Recurso no encontrado" + ex.getMessage());
+        ErrorResponseDto responseDto = ErrorResponseDto.of("RESOURCE_NOT_FOUND", ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(responseDto);
     }
 }

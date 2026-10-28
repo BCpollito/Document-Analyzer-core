@@ -1,11 +1,11 @@
 package com.portfolio.documentanalyzer.infrastructure.outbound.security;
 
 import com.portfolio.documentanalyzer.application.port.in.command.AuthToken;
-import com.portfolio.documentanalyzer.domain.model.Email;
-import com.portfolio.documentanalyzer.domain.model.PasswordHash;
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.PasswordHash;
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.domain.model.UserId;
-import com.portfolio.documentanalyzer.domain.model.Username;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
+import com.portfolio.documentanalyzer.domain.vo.Username;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;

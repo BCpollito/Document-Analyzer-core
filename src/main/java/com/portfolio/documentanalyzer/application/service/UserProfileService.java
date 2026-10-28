@@ -4,10 +4,10 @@ import com.portfolio.documentanalyzer.application.port.in.GetUserProfileUseCase;
 import com.portfolio.documentanalyzer.application.port.in.UpdateUserProfileUseCase;
 import com.portfolio.documentanalyzer.application.port.in.command.UpdateUserProfileCommand;
 import com.portfolio.documentanalyzer.application.port.out.UserRepositoryPort;
-import com.portfolio.documentanalyzer.domain.model.Email;
-import com.portfolio.documentanalyzer.domain.model.UserId;
+import com.portfolio.documentanalyzer.domain.vo.Email;
+import com.portfolio.documentanalyzer.domain.vo.UserId;
 import com.portfolio.documentanalyzer.domain.model.User;
-import com.portfolio.documentanalyzer.domain.model.Username;
+import com.portfolio.documentanalyzer.domain.vo.Username;
 import com.portfolio.documentanalyzer.domain.exception.UserAlreadyExistsException;
 
 import java.util.UUID;
